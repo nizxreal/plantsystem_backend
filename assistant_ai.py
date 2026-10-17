@@ -13,11 +13,18 @@ import sounddevice as sd
 import soundfile as sf
 import speech_recognition as sr
 from firebase_client import FirebaseRTDB, describe_sensors
+from llm_client import GeminiRotator
+from intent import route_intent, local_answer
+from dotenv import load_dotenv
+
+load_dotenv()
 
 SAMPLE_RATE = 16000
 CHANNELS = 1
 DURATION = 5
-VOICE_ID = "id-ID-ArdiNeural"
+VOICE_ID = os.getenv("TTS_VOICE", "id-ID-GadisNeural")
+TTS_RATE = os.getenv("TTS_RATE", "+5%")
+TTS_PITCH = os.getenv("TTS_PITCH", "+0Hz")
 
 
 async def speak(text):
@@ -26,7 +33,8 @@ async def speak(text):
     temp_audio = "temp_response.mp3"
     
     proc = await asyncio.create_subprocess_exec(
-        "edge-tts", "--text", text, "--voice", VOICE_ID, 
+        "edge-tts", "--text", text, "--voice", VOICE_ID,
+        "--rate", TTS_RATE, "--pitch", TTS_PITCH,
         "--write-media", temp_audio,
         stdout=asyncio.subprocess.DEVNULL,
         stderr=asyncio.subprocess.DEVNULL
@@ -92,6 +100,7 @@ def listen_sounddevice():
 
 async def main():
     db = FirebaseRTDB()
+    gemini = GeminiRotator()
     print("=" * 60)
     print("SIPS AI VOICE ASSISTANT")
     print("Contoh: 'status tanaman', 'nyalakan pompa', 'keluar'")
@@ -104,33 +113,38 @@ async def main():
         if not user_input:
             continue
             
-        if "keluar" in user_input or "berhenti" in user_input or "selesai" in user_input:
+        intent = route_intent(user_input)
+
+        if intent["type"] == "exit":
             await speak("Baik, sistem dinonaktifkan. Sampai jumpa!")
             break
-            
-        if "status" in user_input or "kondisi" in user_input or "tanaman" in user_input:
-            sensors = db.get_sensors()
-            laporan = describe_sensors(sensors)
-            await speak(laporan)
-            
-        elif "nyalakan pompa" in user_input or "hidupkan pompa" in user_input or "siram" in user_input:
-            db.set_water_pump(True)
-            await speak("Pompa air penyiraman dinyalakan.")
-            
-        elif "matikan pompa" in user_input or "hentikan pompa" in user_input:
-            db.set_water_pump(False)
-            await speak("Pompa air dimatikan.")
-            
-        elif "kabut" in user_input or "mist" in user_input:
-            if "nyala" in user_input or "hidup" in user_input:
-                db.set_mist_pump(True)
-                await speak("Pompa pengkabutan diaktifkan.")
+
+        if intent["type"] == "actuator":
+            if intent["target"] == "water":
+                db.set_water_pump(intent["state"])
+                await speak("Pompa air penyiraman dinyalakan." if intent["state"] else "Pompa air penyiraman dimatikan.")
             else:
-                db.set_mist_pump(False)
-                await speak("Pompa pengkabutan dimatikan.")
-                
+                db.set_mist_pump(intent["state"])
+                await speak("Pompa pengkabutan diaktifkan." if intent["state"] else "Pompa pengkabutan dimatikan.")
+
+        elif intent["type"] == "sensor":
+            await speak(describe_sensors(db.get_sensors()))
+
         else:
-            await speak("Perintah belum dikenali. Coba tanyakan status tanaman atau perintahkan pompa.")
+            # Chat bebas & pertanyaan spesifik -> jawaban lokal dulu, kalau tidak ada baru ke Gemini.
+            answer = local_answer(intent, db)
+            if answer:
+                await speak(answer)
+            else:
+                sensors = db.get_sensors()
+                sensor_context = describe_sensors(sensors)
+                response = gemini.ask(user_input, sensor_context)
+                if response:
+                    await speak(response)
+                elif gemini.has_keys:
+                    await speak("Maaf, koneksi asisten sedang bermasalah. Coba lagi sebentar ya.")
+                else:
+                    await speak("Aku bisa ngobrol soal tanaman, sensor, tanah, dan penyiraman. Coba tanya kondisi tanaman ya.")
 
 
 if __name__ == "__main__":

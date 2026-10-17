@@ -1,117 +1,95 @@
-# SIPS Voice Assistant - Test Audio & TTS
+# SIPS Voice Assistant
 
-Proyek untuk testing audio (mic + speaker) dan Text-to-Speech di PC Windows, 
-kemudian copy ke Raspberry Pi 4/5 untuk sistem SIPS Plant Monitoring.
+Proyek voice assistant AI untuk sistem irigasi tanaman pintar (SIPS = Super Intelligent Plant System).
+Ngomong soal tanaman, baca sensor dari ESP32 via Firebase RTDB, kontrol pompa, dan ngobrol santai pakai Gemini LLM.
+
+## Fitur
+- Speech-to-Text (Google) → ngerti suara kamu
+- LLM (Gemini 2.5 Flash) → otak AI, ngobrol soal tanaman
+- Text-to-Speech (Edge-TTS) → suara cewek santai `id-ID-GadisNeural`
+- Firebase RTDB → baca sensor (temp, humidity, soil_moisture, ph), kontrol pompa
+- Intent Router → nyalakan/pompa/matikan pompa, cek status, tips tanaman
+- Rotasi API Key → 2-3 akun mencegah rate limit
+- Local Knowledge Base → jawaban tanaman tanpa butuh API key
 
 ## Struktur File
+- `assistant_ai.py` — main loop (Listen-Think-Act-Speak)
+- `firebase_client.py` — akses Firebase RTDB (get sensors, set actuators)
+- `llm_client.py` — Gemini LLM + system prompt + rotasi API key
+- `intent.py` — intent router + local knowledge base (tips tanaman, pupuk, hama, dll)
+- `demo_conversations.py` — demo 7 pertanyaan tanpa butuh mikrofon/API key
+- `setup.py` — install semua dependencies otomatis
+- `requirements.txt` — daftar library Python
+- `RASPBERRY_PI_SETUP.txt` — panduan transfer ke Raspberry Pi
+- `.env` — API key, Firebase URL, konfigurasi voice (di `.gitignore`)
 
-- `requirements.txt` - Dependencies Python
-- `setup.py` - Install dependencies otomatis
-- `audio_test.py` - Test mic dan speaker (rekam + playback)
-- `tts_test.py` - Test Text-to-Speech (Edge-TTS dan pyttsx3)
-
-## Cara Pakai di PC Windows
+## Cara Pakai
 
 ### 1. Install Dependencies
-
-Buka terminal (git bash) di folder ini, lalu jalankan:
-
 ```bash
 python setup.py
 ```
-
-Atau manual:
-
+Atau:
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Test Audio (Mic + Speaker)
-
-```bash
-python audio_test.py
+### 2. Konfigurasi API Key
+Edit `.env` (buat dari `.env.example` jika ada):
+```env
+FIREBASE_URL=https://linoplantsys-default-rtdb.asia-southeast1.firebasedatabase.app
+GEMINI_API_KEY_1=***
+GEMINI_API_KEY_2=***
+GEMINI_API_KEY_3=***
+GEMINI_MODEL=gemini-2.5-flash
+TTS_VOICE=id-ID-GadisNeural
 ```
 
-Skrip ini akan:
-- Tampilkan daftar device audio
-- Rekam suara 5 detik dari mic
-- Putar balik ke speaker
-- Simpan file test_recording.wav
+Dapatkan API key Gemini di: https://aistudio.google.com/app/apikey
 
-### 3. Test Text-to-Speech
-
+### 3. Test Demo (tanpa mikrofon)
 ```bash
-python tts_test.py
+python demo_conversations.py
+```
+Lihat 7 contoh pertanyaan: kondisi tanaman, tips cabai, pupuk, hama, dll.
+
+### 4. Pakai Voice Assistant
+```bash
+python assistant_ai.py
+```
+Rekam pertanyaan → STT → intent router → jawaban (lokal/LLM) → TTS → speak.
+
+## Contoh Percakapan
+- "Tanamanku kabarnya gimana?"
+- "Kenapa kamu marah?"
+- "Tanah kering harus gimana?"
+- "Tips cabai sehat"
+- "Nyalakan pompa"
+- "Matikan pompa kabut"
+
+## Topik yang Didukung
+- Tanaman, sensor, tanah, penyiraman
+- Tips perawatan (pupuk, hama, penyakit)
+- Kontrol pompa air & pengabutan
+- Mood tanaman (Happy/Crying/Angry berdasarkan skor sensor)
+
+## Arsitektur
+```
+Suara (mic) → STT (Google) → Intent Router
+                                  ├── Actuator control → Firebase RTDB → Pompa
+                                  ├── Sensor report → Firebase RTDB → Baca sensor
+                                  ├── Local knowledge → Tips tanaman offline
+                                  └── Gemini LLM → Chat + analisa mood → TTS (Edge-TTS)
 ```
 
-Skrip ini akan test 2 TTS engine:
-- Edge-TTS (Microsoft, butuh internet, suara natural)
-- pyttsx3 (offline, suara robot)
+## Voice Configuration
+- Voice: `id-ID-GadisNeural` (cewek, santai)
+- Rate: `+5%` (natur)
+- Pitch: `+0Hz` (default)
+- Cek semua voice Indonesia: `edge-tts --list-voices | grep "id-ID"`
 
-## Copy ke Raspberry Pi
-
-Setelah test berhasil di PC, copy folder ini ke Raspberry Pi:
-
-### Via USB Stick
-1. Copy folder sips-voice-assistant ke USB
-2. Colok ke Raspberry Pi
-3. Copy ke /home/pi/
-
-### Via Git (jika sudah push ke GitHub)
-```bash
-git clone <repo-url>
-cd sips-voice-assistant
-python3 setup.py
-```
-
-### Via SCP (jika PC dan RPi di WiFi sama)
-```bash
-scp -r D:/Arfalindo/sips-voice-assistant pi@<IP_RASPBERRY>:/home/pi/
-```
-
-## Install di Raspberry Pi
-
-SSH ke Raspberry Pi atau buka terminal di RPi:
-
-```bash
-cd /home/pi/sips-voice-assistant
-sudo apt update
-sudo apt install -y portaudio19-dev python3-pip
-python3 setup.py
-```
-
-Lalu jalankan test yang sama:
-```bash
-python3 audio_test.py
-python3 tts_test.py
-```
-
-## Troubleshooting
-
-### Mic tidak terdeteksi di Windows
-- Pastikan mic sudah diaktifkan di Settings > Privacy > Microphone
-- Cek di Sound Settings apakah mic terdeteksi
-
-### Speaker tidak terdengar
-- Cek volume Windows atau RPi
-- Cek apakah jack audio tersambung dengan benar (RPi 4)
-- Untuk RPi 5, gunakan USB Sound Card
-
-### Edge-TTS error "No connection"
-- Cek koneksi internet
-- Jika internet terblokir, gunakan pyttsx3 (offline)
-
-### pyttsx3 error di Windows
-- Normal, beberapa sistem Windows tidak support pyttsx3
-- Gunakan Edge-TTS sebagai gantinya
-
-## Next Steps
-
-Setelah audio dan TTS berfungsi:
-1. Tambahkan Speech-to-Text (Whisper API atau whisper.cpp)
-2. Integrasi dengan AI (OpenAI API atau Ollama lokal)
-3. Tambahkan display GIF untuk ekspresi wajah tanaman
-4. Hubungkan dengan Firebase RTDB untuk data sensor ESP32
+## Push ke GitHub
+Lihat `GIT_PUSH_GUIDE.txt` untuk panduan lengkap.
 
 ---
 Project SIPS - Super Intelligent Plant System
