@@ -1,4 +1,4 @@
-"""Intent router lokal untuk SIPS Voice Assistant."""
+"""Intent router lokal untuk smile Voice Assistant."""
 
 STOP_WORDS = ("keluar", "berhenti", "selesai", "stop")
 SENSOR_WORDS = ("status", "kondisi", "kabar", "bagaimana", "berapa", "sekarang", "hari ini")

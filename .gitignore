@@ -8,3 +8,4 @@ dist/
 *.egg-info/
 demo_conversations.py
 RASPBERRY_PI_SETUP.txt
+RASPBERRY_PI_CLEAN_SETUP.txt

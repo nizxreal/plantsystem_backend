@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SIPS Voice Assistant - Tanpa PyAudio
+smile Voice Assistant - Tanpa PyAudio
 Menggunakan sounddevice untuk mic dan speaker.
 """
 
@@ -102,11 +102,11 @@ async def main():
     db = FirebaseRTDB()
     gemini = GeminiRotator()
     print("=" * 60)
-    print("SIPS AI VOICE ASSISTANT")
+    print("smile AI VOICE ASSISTANT")
     print("Contoh: 'status tanaman', 'nyalakan pompa', 'keluar'")
     print("=" * 60)
     
-    await speak("Sistem SIPS siap. Ada yang bisa saya bantu?")
+    await speak("Sistem smile siap. Ada yang bisa saya bantu?")
     
     while True:
         user_input = listen_sounddevice()

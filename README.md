@@ -1,6 +1,6 @@
-# SIPS Voice Assistant
+# smile Voice Assistant
 
-Proyek voice assistant AI untuk sistem irigasi tanaman pintar (SIPS = Super Intelligent Plant System).
+Proyek voice assistant AI untuk sistem irigasi tanaman pintar (smile = Super Intelligent Plant System).
 Ngomong soal tanaman, baca sensor dari ESP32 via Firebase RTDB, kontrol pompa, dan ngobrol santai pakai Gemini LLM.
 
 ## Fitur
@@ -92,5 +92,5 @@ Suara (mic) → STT (Google) → Intent Router
 Lihat `GIT_PUSH_GUIDE.txt` untuk panduan lengkap.
 
 ---
-Project SIPS - Super Intelligent Plant System
+Project smile - Super Intelligent Plant System
 Arfalindo Nova Hidayat - SMK Leonardo Klaten

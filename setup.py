@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Setup & Run Script untuk SIPS Voice Assistant
+Setup & Run Script untuk smile Voice Assistant
 Jalankan ini dulu untuk install dependencies.
 """
 
@@ -21,7 +21,7 @@ def run_cmd(cmd, desc=""):
 
 def main():
     print("\n" + "="*60)
-    print("SIPS VOICE ASSISTANT - SETUP")
+    print("smile VOICE ASSISTANT - SETUP")
     print("="*60)
     
     # Cek Python version

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Firebase RTDB Client untuk SIPS Voice Assistant.
+Firebase RTDB Client untuk smile Voice Assistant.
 
 Struktur database:
-  /sips/sensors/: temperature, humidity, soil_moisture, soil_ph
-  /sips/actuators/: water_pump, mist_pump (boolean)
+  /smile/sensors/: temperature, humidity, soil_moisture, soil_ph
+  /smile/actuators/: water_pump, mist_pump (boolean)
 
 Pakai REST API langsung (tanpa firebase-admin SDK) supaya ringan di Raspberry Pi.
 """
@@ -17,9 +17,9 @@ load_dotenv()
 
 DEFAULT_URL = "https://linoplantsys-default-rtdb.asia-southeast1.firebasedatabase.app"
 
-SENSORS_PATH = "sips/sensors"
-ACTUATORS_PATH = "sips/actuators"
-CMD_PATH = "sips/commands"
+SENSORS_PATH = "smile/sensors"
+ACTUATORS_PATH = "smile/actuators"
+CMD_PATH = "smile/commands"
 
 TIMEOUT = 10
 

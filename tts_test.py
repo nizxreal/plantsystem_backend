@@ -19,7 +19,7 @@ except ImportError:
     sys.exit(1)
 
 # Teks yang akan diucapkan
-TEXT_BAHASA = "Halo, ini tes suara untuk sistem SIPS. Raspberry Pi dan speaker berfungsi normal."
+TEXT_BAHASA = "Halo, ini tes suara untuk sistem smile. Raspberry Pi dan speaker berfungsi normal."
 
 async def test_edge_tts():
     """Test TTS menggunakan Edge-TTS (Microsoft, kualitas tinggi, butuh internet)."""
