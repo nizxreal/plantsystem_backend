@@ -9,7 +9,7 @@ import soundfile as sf
 import numpy as np
 
 DURATION = 5  # detik
-FS = 16000  # sample rate
+FS = 44100  # sample rate supported by USB mic
 
 def test_mic():
     """Rekam dari mic, simpan ke file."""

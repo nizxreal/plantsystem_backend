@@ -6,6 +6,7 @@ Menggunakan sounddevice untuk mic dan speaker.
 
 import os
 import asyncio
+import subprocess
 import io
 import wave
 import numpy as np
@@ -19,7 +20,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-SAMPLE_RATE = 16000
+SAMPLE_RATE = 44100
 CHANNELS = 1
 DURATION = 5
 VOICE_ID = os.getenv("TTS_VOICE", "id-ID-GadisNeural")
@@ -43,16 +44,19 @@ async def speak(text):
     
     if os.path.exists(temp_audio):
         try:
-            data, fs = sf.read(temp_audio)
-            sd.play(data, fs)
-            sd.wait()
+            temp_wav = "temp_response.wav"
+            subprocess.run(["ffmpeg", "-y", "-i", temp_audio, "-ac", "1", "-ar", "44100", temp_wav],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+            subprocess.run(["aplay", "-D", "plughw:2,0", temp_wav],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
         except Exception as e:
             print(f"(Gagal putar: {e})")
         finally:
-            try:
-                os.remove(temp_audio)
-            except Exception:
-                pass
+            for f in [temp_audio, "temp_response.wav"]:
+                try:
+                    os.remove(f)
+                except:
+                    pass
 
 
 def listen_sounddevice():

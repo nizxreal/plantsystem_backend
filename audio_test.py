@@ -20,7 +20,7 @@ def list_devices():
 def test_audio():
     """Rekam suara dari mic, mainkan kembali dari speaker."""
     DURATION = 5  # detik
-    FS = 16000  # sample rate
+    FS = 44100  # sample rate supported by USB mic
     
     list_devices()
     
