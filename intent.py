@@ -1,7 +1,8 @@
 """Intent router lokal untuk smile Voice Assistant."""
 
 STOP_WORDS = ("keluar", "berhenti", "selesai", "stop")
-SENSOR_WORDS = ("status", "kondisi", "kabar", "bagaimana", "berapa", "sekarang", "hari ini")
+GREETING_WORDS = ("halo", "hai", "hello", "hy", "selamat", "pagi", "siang", "sore", "malam", "apa kabar", "kabar")
+SENSOR_WORDS = ("status tanaman", "kondisi tanaman", "suhu", "kelembapan", "kelembaban", "ph", "sensor", "data sensor")
 WATER_PUMP_WORDS = ("pompa air", "pompa penyiraman", "siram", "penyiraman")
 MIST_PUMP_WORDS = ("pompa kabut", "pompa pengkabutan", "mist")
 ON_WORDS = ("nyalakan", "hidupkan", "aktifkan", "mulai", "sirami", "siram")
@@ -13,6 +14,7 @@ CHAT_WORDS = (
     "kering", "basah", "panas", "dingin", "harus gimana", "solusi", "bantu"
 )
 ACTUATOR_QUERY_WORDS = ("aktuator", "pompa")
+PLANT_CONTEXT_WORDS = ("tanaman", "sensor", "suhu", "kelembapan", "ph", "pompa", "siram", "air", "kabut")
 UNKNOWN_REPLY = "Aku masih belum paham maksudnya. Bisa tanyakan kondisi tanaman, nyalakan pompa, atau tips merawat tanaman."
 
 
@@ -20,6 +22,11 @@ def route_intent(text: str) -> dict:
     t = (text or "").lower().strip()
     if any(w in t for w in STOP_WORDS):
         return {"type": "exit"}
+
+    # Prioritas: sapaan/obrolan umum tanpa konteks tanaman -> ke Gemini
+    if any(w in t for w in GREETING_WORDS):
+        if not any(w in t for w in PLANT_CONTEXT_WORDS):
+            return {"type": "chat", "query": t}
 
     if any(w in t for w in SENSOR_WORDS):
         return {"type": "sensor"}
