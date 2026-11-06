@@ -11,15 +11,18 @@ Pakai REST API langsung (tanpa firebase-admin SDK) supaya ringan di Raspberry Pi
 
 import os
 import requests
-from dotenv import load_dotenv
 
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 DEFAULT_URL = "https://linoplantsys-default-rtdb.asia-southeast1.firebasedatabase.app"
 
-SENSORS_PATH = "smile/sensors"
-ACTUATORS_PATH = "smile/actuators"
-CMD_PATH = "smile/commands"
+SENSORS_PATH = "sips/sensors"
+ACTUATORS_PATH = "sips/actuators"
+CMD_PATH = "sips/commands"
 
 TIMEOUT = 10
 
@@ -68,6 +71,23 @@ class FirebaseRTDB:
         """Baca status aktuator (pompa)."""
         return self.get(ACTUATORS_PATH) or {}
 
+    def get_master(self):
+        """Baca status mode master (True = Auto, False = Manual)."""
+        res = self.get("master")
+        if res is None:
+            return True
+        return bool(res)
+
+    def set_master(self, is_auto):
+        """Set mode master ke Firebase (/master.json)."""
+        try:
+            r = requests.put(self._url("master"), json=bool(is_auto), timeout=self.timeout)
+            if r.status_code != 200:
+                raise FirebaseError(f"PUT master -> HTTP {r.status_code}")
+            return bool(is_auto)
+        except requests.RequestException as e:
+            raise FirebaseError(f"Gagal koneksi ke Firebase: {e}")
+
     def set_water_pump(self, state):
         return self.patch(ACTUATORS_PATH, {"water_pump": bool(state)})
 
@@ -111,9 +131,21 @@ def describe_sensors(sensors):
     if not sensors:
         return "Belum ada data sensor dari ESP32. Pastikan ESP32 sudah terhubung."
 
+    # Support struktur nested dari ESP32 (/sips/sensors/air dan soil)
+    flat = {}
+    if 'air' in sensors or 'soil' in sensors:
+        air = sensors.get('air', {})
+        soil = sensors.get('soil', {})
+        flat['temperature'] = air.get('temperature')
+        flat['humidity'] = air.get('humidity')
+        flat['soil_moisture'] = soil.get('moisture')
+        flat['soil_ph'] = soil.get('ph')
+    else:
+        flat = sensors
+
     parts = []
     for key, (label, unit) in SENSOR_LABELS.items():
-        val = sensors.get(key)
+        val = flat.get(key)
         if val is None:
             continue
         lo, hi = RANGES[key]

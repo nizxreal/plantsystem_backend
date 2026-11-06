@@ -1,0 +1,14 @@
+[Unit]
+Description=SIPS Voice and Display Service
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/Desktop/plantsystem_backend
+Environment=DISPLAY=:0
+ExecStart=/usr/bin/python3 /home/pi/Desktop/plantsystem_backend/assistant_ai.py & /usr/bin/python3 /home/pi/Desktop/plantsystem_backend/display_ekspresi_pygame.py
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

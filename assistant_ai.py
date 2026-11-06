@@ -59,15 +59,31 @@ async def speak(text):
                     pass
 
 
+def find_input_device():
+    """Cari index device mic USB di sounddevice."""
+    try:
+        devices = sd.query_devices()
+        for idx, dev in enumerate(devices):
+            if dev.get('max_input_channels', 0) > 0 and 'USB' in dev.get('name', ''):
+                return idx
+        # Fallback ke default input jika USB tidak ketemu by name
+        def_in = sd.default.device[0]
+        return def_in if def_in != -1 else None
+    except Exception:
+        return None
+
+
 def listen_sounddevice():
     """Rekam dari mic pakai sounddevice, kirim ke Google STT."""
     print("[Mendengarkan...]")
     try:
+        mic_idx = find_input_device()
         recording = sd.rec(
             int(DURATION * SAMPLE_RATE), 
             samplerate=SAMPLE_RATE, 
             channels=CHANNELS, 
-            dtype='int16'
+            dtype='int16',
+            device=mic_idx
         )
         sd.wait()
         
@@ -113,6 +129,11 @@ async def main():
     await speak("Sistem smile siap. Ada yang bisa saya bantu?")
     
     while True:
+        # Cek apakah mic sedang di-mute via flag file
+        if os.path.exists('/tmp/assistant_mic_muted'):
+            await asyncio.sleep(0.5)
+            continue
+
         user_input = listen_sounddevice()
         if not user_input:
             continue
